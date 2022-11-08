@@ -23,6 +23,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -113,8 +114,9 @@ public class server extends javax.swing.JFrame {
                     case "START" -> start();
                     case "SHUTDOWN" -> shutdown();
                     case "KILL" -> kill();
-                    case "CHECKSCREEN" -> checkscreen();
+//                    case "CHECKSCREEN" -> checkscreen();
                     case "XEMAPP" -> xemapp();
+                    case "SIGNOUT" -> signout();
                     case "XEMPROCESS" -> xemprocess();
                     case "EXIT" -> {
                         program.sserver.close();
@@ -182,6 +184,19 @@ public class server extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null,ex);
         }
     }
+    
+    public void signout()
+    {
+        try{
+            Runtime runtime = Runtime.getRuntime();
+            Process proc = runtime.exec("shutdown -l -t 5");
+            System.exit(0);
+        } catch (IOException ex)
+        {
+            JOptionPane.showMessageDialog(null,ex);
+        }
+    }
+    
     public void xemprocess()
     {
         try {
@@ -351,349 +366,74 @@ public class server extends javax.swing.JFrame {
                         }
                     }
     }
-    public void application() throws IOException
-    {
-        boolean indo = true;
-        while (indo)
-        {
-            receiveSignal();
-            switch(program.signal)
-            {
-                case "XEM" ->                 
-                {
-                    try {
-                        String line = null;
-                        p = Runtime.getRuntime().exec("powershell.exe Get-Process | Where-Object { $_.MainWindowTitle } | Format-Table ID,Name,Mainwindowtitle –AutoSize");
-                        input = new BufferedReader(new InputStreamReader(p.getInputStream()));                  
-                        int soprocess = 0;
-                        while(input.readLine() != null){
-                            soprocess++;
-                        }
-                        String soprocess1 = Integer.toString(soprocess);
-//                        program.os = new BufferedWriter(new OutputStreamWriter(program.sserver.getOutputStream()));
-                        program.os.write(soprocess1);
-                        program.os.newLine();
-                        program.os.flush();
-                        p1 = Runtime.getRuntime().exec("powershell.exe Get-Process | Where-Object { $_.MainWindowTitle } | Format-Table ID,Name,Mainwindowtitle –AutoSize");
-                        input = new BufferedReader(new InputStreamReader(p1.getInputStream()));
-                        out = new ObjectOutputStream(program.sserver.getOutputStream());
-                        try {
-                            for(int i = 0; (i<soprocess) ;i++) {
-                                line = input.readLine();
-                                line = line.trim();
-                                if (i>=3) 
-                                {
-                                    if (i == soprocess-2)
-                                    {
-                                        break;
-                                    }
-                                    line = line.replaceAll("\\s{1,100}", " ");
-                                    String[] splitline = line.split(" ",3);
-                                    String data[] = {splitline[0],splitline[1],splitline[2]};
-                                    out.writeObject(data);
-                                    out.flush();
-                                }
-                            }
-                        }
-                    catch(IOException e)
-                    {
-                      JOptionPane.showMessageDialog(null,e);
-                    }
-                    }catch(IOException e)
-                    {
-                      JOptionPane.showMessageDialog(null,e);
-                    }
-                }
-                case "START" -> {
-                    boolean work = true;
-                    while (work) {
-                        receiveSignal();
-                        switch(program.signal)
-                        {
-                            case "STARTEXE" -> {
-                                String exe = program.is.readLine();
-                                if (exe != "ERROR")
-                                {
-                                try {
-//                                    Process child = Runtime.getRuntime().exec("cmd /c start "+exe+".exe");
-                                    ProcessBuilder p = new ProcessBuilder();
-                                    p.command(exe+".exe");
-                                    p.start();
-                                    program.os.write("Successfully run the program!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                } catch (IOException ex) {
-                                    program.os.write("There is an error, please try again!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                }
-                                } else {
-                                program.os.write("There is an error, please try again!");
-                                program.os.newLine();
-                                program.os.flush();
-                                break;
-                                }
-                            }
-                            case "QUIT" -> {
-                                work = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                case "KILL" -> {
-                    boolean work = true;
-                    while (work) {
-                        receiveSignal();
-                        switch(program.signal)
-                        {
-                            case "KILLID" -> {
-                                String pid = program.is.readLine();
-                                if (pid != null)
-                                {
-                                try {
-                                    String[] cmd = {"taskkill", "/F", "/T", "/PID", pid};
-                                    ProcessBuilder p = new ProcessBuilder();
-                                    p.command(cmd);
-                                    p.start();
-                                    program.os.write("Successfully kill a process!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                } catch (IOException ex) {
-                                    program.os.write("There is an error, please try again!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                    break;
-                                }
-                                } else {
-                                program.os.write("There is an error, please try again!");
-                                program.os.newLine();
-                                program.os.flush();
-                                break;
-                                }
-                            }
-                            case "QUIT" -> {
-                                work = false;
-                                break;
-                            }
-                        }
-                }
-                }
-                      case "QUIT" -> {
-                      indo = false;
-                      break;
-                }
-            }
-        }
-    }
+    
    
-    public void process() throws IOException
-    {
-        boolean indo = true;
-        while (indo)
-        {
-            receiveSignal();
-            switch(program.signal)
-            {
-                case "XEM" ->                 {
-                    try {
-                        String line = null;
-                        p = Runtime.getRuntime().exec(System.getenv("windir") +"\\system32\\"+"tasklist.exe");
-                        input = new BufferedReader(new InputStreamReader(p.getInputStream()));                  
-                        int soprocess = 0;
-                        while(input.readLine() != null){
-                            soprocess++;
-                        }
-                        String soprocess1 = Integer.toString(soprocess);
-                        program.os.write(soprocess1);
-                        program.os.newLine();
-                        program.os.flush();
-                        p1 = Runtime.getRuntime().exec(System.getenv("windir") +"\\system32\\"+"tasklist.exe");
-                        input = new BufferedReader(new InputStreamReader(p1.getInputStream()));
-                        out = new ObjectOutputStream(program.sserver.getOutputStream());
-                        try {
-                            for(int i = 0; (i<soprocess) ;i++) {
-                                line = input.readLine();
-                                line = line.trim();
-                                if (i>=3)
-                                {
-                                    for (int u =0; u < line.length()-2;u++)
-                                    {
-                                        if ((line.charAt(u)>64 && line.charAt(u)<=122)&&(line.charAt(u+2)>64 && line.charAt(u+2)<=122) && line.charAt(u+1)==' ')
-                                        {
-                                            line = line.substring(0,u+1)+"_"+line.substring(u+2,line.length());
-                                        }
-                                    }
-                                    String[] splitline = line.split("\\s{1,100}");
-                                    String data[] = {splitline[0],splitline[1],splitline[2],splitline[3],splitline[4]+splitline[5]};
-                                    out.writeObject(data);
-                                    out.flush();
-                                }
-                            }
-                        }catch(IOException e)
-                        {
-                          JOptionPane.showMessageDialog(null,e);
-                        }
-                        
-                    }
-                    catch(IOException e)
-                    {
-                      JOptionPane.showMessageDialog(null,e);
-                    }
-                }
-                case "START" -> {
-                    boolean work = true;
-                    while (work) {
-                        receiveSignal();
-                        switch(program.signal)
-                        {
-                            case "STARTEXE" -> {
-                                String exe = program.is.readLine();
-                                if (exe != "ERROR")
-                                {
-                                try {
-//                                    Runtime.getRuntime().exec("cmd /c start "+ exe +".exe");
-                                    ProcessBuilder p = new ProcessBuilder();
-                                    p.command(exe+".exe");
-                                    p.start();
-                                    program.os.write("Successfully run the program!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                } catch (IOException ex) {
-                                    program.os.write("There is an error, please try again!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                    break;
-                                }
-                                } else {
-                                program.os.write("There is an error, please try again!");
-                                program.os.newLine();
-                                program.os.flush();
-                                break;
-                                }
-                            }
-                            case "QUIT" -> {
-                                work = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                case "KILL" -> {
-                    boolean work = true;
-                    while (work) {
-                        receiveSignal();
-                        switch(program.signal)
-                        {
-                            case "KILLID" -> {
-                                String pid = program.is.readLine();
-                                if (pid != null)
-                                {
-                                try {
-                                    String[] cmd = {"taskkill", "/F", "/T", "/PID", pid};
-                                    ProcessBuilder p = new ProcessBuilder();
-                                    p.command(cmd);
-                                    p.start();
-                                    program.os.write("Successfully kill a process!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                } catch (IOException ex) {
-                                    program.os.write("There is an error, please try again!");
-                                    program.os.newLine();
-                                    program.os.flush();
-                                    break;
-                                }
-                                } else {
-                                program.os.write("There is an error, please try again!");
-                                program.os.newLine();
-                                program.os.flush();
-                                break;
-                                }
-                            }
-                            case "QUIT" -> {
-                                work = false;
-                                break;
-                            }
-                        }
-                }
-                }
-                  case "QUIT" -> {
-                      indo = false;
-                      break;
-                }
-            }
-        }
-    }
+ 
 public void takepic() throws IOException
     {
-        boolean indo = true;
-        while (indo)
-        {
-            receiveSignal();
-            switch(program.signal)
-            {
-                case "TAKE" ->                 {
-                            try{
-                            ous = new ByteArrayOutputStream();
-                            BufferedImage image = new Robot().createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-                            ImageIO.write(image, "png", program.sserver.getOutputStream());
-                            program.sserver.getOutputStream().write(ous.toByteArray());
-                            ous.flush();
-                            } catch(Exception ex){
-                                JOptionPane.showMessageDialog(null,ex);
-                            }
-                        }
-                case "QUIT" ->                 {
-                    indo = false;
-                    break;
-                }
+        try{
+            robot = new Robot();
+            os = program.sserver.getOutputStream();
+            ous = new ByteArrayOutputStream();
+            bimg = robot.createScreenCapture(new Rectangle(0,0,(int) d.getWidth(), (int) d.getHeight()));
+            ImageIO.write(bimg, "png", ous);
+            byte[] bytes = ous.toByteArray();
+            out = new ObjectOutputStream(program.sserver.getOutputStream()) ;
+            out.writeObject(bytes); 
+            return;
+            } catch(Exception ex){
+                JOptionPane.showMessageDialog(null,ex);
             }
-        }
     }
     
-    public void checkscreen()
-    {
-        boolean indo = true;
-        while (indo)
-        {
-            receiveSignal();
-            switch(program.signal)
-            {
-                case "START" ->                 {
-                    try{
-                        Robot robot = new Robot();
-                        Toolkit toolkit = Toolkit.getDefaultToolkit();
-                        Dimension d = toolkit.getScreenSize();
-
-                        while (true){
-                            ous = new ByteArrayOutputStream();
-                            BufferedImage img = robot.createScreenCapture(new Rectangle(0,0,(int) d.getWidth(), (int) d.getHeight()));
-                            ImageIO.write(img, "png", ous);
-                            program.sserver.getOutputStream().write(ous.toByteArray());
-                            ous.flush();
-                            ous.reset();
-                            ous.close();
-                            try {
-                                Thread.sleep(30);
-                            } catch (Exception e) {
-                            }
-                        }
-                    } catch(Exception ex){
-                            JOptionPane.showMessageDialog(null,ex);
-                    }
-                }
-                case "QUIT" ->                 {
-                    indo = false;
-                    break;
-                }
-            }
-        }
-    }
-    ByteArrayOutputStream ous = null;
-    Process p = null;
-    Process p1 = null;
+//    public void checkscreen()
+//    {
+//        boolean indo = true;
+//        while (indo)
+//        {
+//            receiveSignal();
+//            switch(program.signal)
+//            {
+//                case "START" ->                 {
+//                    try{
+//                        Robot robot = new Robot();
+//                        Toolkit toolkit = Toolkit.getDefaultToolkit();
+//                        Dimension d = toolkit.getScreenSize();
+//
+//                        while (true){
+//                            ous = new ByteArrayOutputStream();
+//                            BufferedImage img = robot.createScreenCapture(new Rectangle(0,0,(int) d.getWidth(), (int) d.getHeight()));
+//                            ImageIO.write(img, "png", ous);
+//                            program.sserver.getOutputStream().write(ous.toByteArray());
+//                            ous.flush();
+//                            ous.reset();
+//                            ous.close();
+//                            try {
+//                                Thread.sleep(30);
+//                            } catch (Exception e) {
+//                            }
+//                        }
+//                    } catch(Exception ex){
+//                            JOptionPane.showMessageDialog(null,ex);
+//                    }
+//                }
+//                case "QUIT" ->                 {
+//                    indo = false;
+//                    break;
+//                }
+//            }
+//        }
+//    }
+ByteArrayOutputStream ous = null;
     ObjectOutputStream out = null;
     BufferedReader input = null;
+    OutputStream os = null;
+    Process p = null;
+    Process p1 = null;
+    private Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+    private Image newimg;
+    private Robot robot;
+    private static BufferedImage bimg;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Server;
     // End of variables declaration//GEN-END:variables
