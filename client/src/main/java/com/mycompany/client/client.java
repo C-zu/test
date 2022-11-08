@@ -859,11 +859,15 @@ public class client extends javax.swing.JFrame {
             program.os.write(s);
             program.os.newLine();
             program.os.flush();
-            is = program.sclient.getInputStream();
-            img = ImageIO.read(is);
+            oin = new ObjectInputStream(program.sclient.getInputStream());
+            bytes = (byte[]) oin.readObject();
+            InputStream in = new ByteArrayInputStream(bytes);
+            img = ImageIO.read(in);
             Image img1 = img;
             screenshot.setIcon(new ImageIcon(img1.getScaledInstance(screenshot.getWidth(),screenshot.getHeight(), Image.SCALE_DEFAULT)));
         } catch (IOException ex) {
+            Logger.getLogger(client.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
             Logger.getLogger(client.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_takepicActionPerformed
@@ -902,6 +906,7 @@ public class client extends javax.swing.JFrame {
 //            }
 //        });
 //    }
+    byte[] bytes;
     InputStream is = null;
     private BufferedImage img;
     ObjectInputStream oin = null;
